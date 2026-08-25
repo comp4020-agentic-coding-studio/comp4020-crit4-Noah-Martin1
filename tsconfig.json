@@ -16,5 +16,7 @@
     "useDefineForClassFields": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["*.ts", "spec", "scripts"]
+  // `*.ts` is root-level only: a subdirectory left out of this list is not
+  // typechecked at all, and `pnpm typecheck` passes while saying nothing.
+  "include": ["*.ts", "src", "prototypes", "spec", "scripts"]
 }

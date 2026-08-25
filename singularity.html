@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sound Garden — Open Field</title>
+    <title>Sound Garden — Singularity</title>
     <meta
       name="description"
-      content="Flick a blue orb through an empty field and grow new ones around it. Every wall, bump and absorption is a note from one scale, synthesised live in the browser."
+      content="A heavy orb holding three shells of satellites in stable orbit. Disturb it and the whole system re-tunes itself, one note per collision."
     />
 
-    <!-- The link-preview card. It resolves against this page, like any link. -->
+    <!-- Same card, same directory: this page sits alongside index.html. -->
     <meta property="og:type" content="website" />
     <meta property="og:image" content="./card.png" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -17,12 +17,15 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <canvas id="stage" aria-label="An open field of orbs that sound when they touch"></canvas>
+    <canvas
+      id="stage"
+      aria-label="A heavy central orb with smaller orbs in orbit around it"
+    ></canvas>
 
     <div class="chrome chrome--top">
       <nav aria-label="Levels">
-        <a href="./" aria-current="page">Open field</a>
-        <a href="./singularity.html">Singularity</a>
+        <a href="./">Open field</a>
+        <a href="./singularity.html" aria-current="page">Singularity</a>
       </nav>
     </div>
 
@@ -31,12 +34,12 @@
     </div>
 
     <div id="invitation">
-      <p>Swipe the blue orb</p>
-      <small>then click anywhere &mdash; hold to grow it bigger</small>
+      <p>Swipe yourself into the orbit</p>
+      <small>the small ones are yours to take &mdash; the big one is not</small>
     </div>
 
     <div class="chrome chrome--bottom">
-      <h1>Sound Garden &middot; Open Field</h1>
+      <h1>Sound Garden &middot; Singularity</h1>
     </div>
 
     <div class="chrome chrome--bottom-right">
@@ -45,9 +48,9 @@
         <kbd>&larr;&uarr;&darr;&rarr;</kbd> aim &middot; <kbd>space</kbd> grow &middot; scroll or
         <kbd>+</kbd><kbd>&minus;</kbd> zoom &middot; <kbd>M</kbd> mute &middot; <kbd>R</kbd> reset
       </p>
-      <a class="next" href="./singularity.html">Next <span aria-hidden="true">&rarr;</span></a>
+      <a class="next" href="./">&larr; Open field</a>
     </div>
 
-    <script type="module" src="./main.ts"></script>
+    <script type="module" src="./singularity.ts"></script>
   </body>
 </html>

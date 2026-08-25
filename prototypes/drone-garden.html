@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drone Garden</title>
+    <meta
+      name="description"
+      content="Plant sustained voices in a dark field and they bloom into a shifting chord. A browser instrument built with the Web Audio API."
+    />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="../card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #07070d;
+        color: #e8e6f2;
+        font-family: system-ui, sans-serif;
+        touch-action: none;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      canvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* The nav and heading are real content, but they must not compete with
+         the field for attention — they sit quietly in the corners. */
+      header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        padding: 1rem 1.25rem;
+        z-index: 2;
+        font-size: 0.8rem;
+      }
+
+      header a {
+        color: rgba(232, 230, 242, 0.45);
+        text-decoration: none;
+      }
+
+      header a:hover,
+      header a:focus-visible {
+        color: rgba(232, 230, 242, 0.9);
+      }
+
+      h1 {
+        position: fixed;
+        bottom: 1rem;
+        left: 1.25rem;
+        margin: 0;
+        z-index: 2;
+        font-size: 0.8rem;
+        font-weight: 400;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(232, 230, 242, 0.35);
+      }
+
+      /* The invitation: the whole opening screen is one line of text that says
+         what to do, and it dissolves the moment the player does it. */
+      #invitation {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        gap: 0.75rem;
+        padding: 2rem;
+        pointer-events: none;
+        transition: opacity 1.2s ease;
+      }
+
+      #invitation.gone {
+        opacity: 0;
+      }
+
+      #invitation p {
+        margin: 0;
+        font-size: clamp(1.1rem, 3.5vw, 1.6rem);
+        font-weight: 300;
+        letter-spacing: 0.02em;
+        animation: breathe 4s ease-in-out infinite;
+      }
+
+      #invitation small {
+        color: rgba(232, 230, 242, 0.4);
+        font-size: 0.85rem;
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 0.55;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #invitation p {
+          animation: none;
+          opacity: 0.9;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Primary"><a href="../">&larr; back</a></nav>
+    </header>
+
+    <canvas id="field" aria-label="A field where each click plants a sustained tone"></canvas>
+
+    <div id="invitation">
+      <p>Click anywhere to plant a sound</p>
+      <small>plant a few &middot; click one again to let it fade</small>
+    </div>
+
+    <h1>Drone Garden</h1>
+
+    <script type="module" src="./drone-garden.ts"></script>
+  </body>
+</html>

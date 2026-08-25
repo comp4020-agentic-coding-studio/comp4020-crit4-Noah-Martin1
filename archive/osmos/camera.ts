@@ -1,3 +1,5 @@
+// FROZEN — part of the archived Osmos instrument. See instrument.ts.
+
 // The camera. The arena is a fixed size in world units and is deliberately
 // larger than the window, so the window is a viewport onto it rather than the
 // container itself — resizing the browser changes how much you can see, not how

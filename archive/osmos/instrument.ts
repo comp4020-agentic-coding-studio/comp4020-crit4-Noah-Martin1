@@ -1,3 +1,8 @@
+// FROZEN. This is the archived Osmos-style instrument, kept as process
+// evidence and still deployed under /archive/osmos/. It is not the current
+// prototype and is not worked on any more — see src/strings.ts for that.
+// It shares src/audio.ts, so extend that file rather than changing it.
+
 // The instrument: input in, physics forward, sound and pixels out.
 //
 // Both pages run this same file; they differ only in the arena they ask for.
@@ -16,7 +21,7 @@ import {
   snapToChord,
   toggleMuted,
   wake,
-} from "./audio.ts";
+} from "../../src/audio.ts";
 import {
   type Camera,
   clampCamera,
@@ -25,7 +30,7 @@ import {
   screenToWorld,
   visibleRect,
 } from "./camera.ts";
-import { need } from "./dom.ts";
+import { need } from "../../src/dom.ts";
 import { type Overlay, drawScene } from "./render.ts";
 import {
   MAX_RADIUS,

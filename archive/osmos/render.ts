@@ -1,3 +1,5 @@
+// FROZEN — part of the archived Osmos instrument. See instrument.ts.
+
 // Drawing, in two coordinate systems: the starfield and the vignette live in
 // screen space so they parallax behind everything, and the arena itself is
 // drawn in world units under the camera transform.

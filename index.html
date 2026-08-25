@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sound Garden — Open Field</title>
+    <title>Instrument Kit</title>
     <meta
       name="description"
-      content="Flick a blue orb through an empty field and grow new ones around it. Every wall, bump and absorption is a note from one scale, synthesised live in the browser."
+      content="Six instruments in one tuning — harp, bass, marimba, blocks, drums, bells. Pick one up, play it, and layer a loop. Every note is synthesised live in the browser."
     />
 
     <!-- The link-preview card. It resolves against this page, like any link. -->
@@ -17,35 +17,40 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <canvas id="stage" aria-label="An open field of orbs that sound when they touch"></canvas>
+    <canvas id="stage" aria-label="Four instruments you can pick up and play"></canvas>
 
-    <div class="chrome chrome--top">
-      <nav aria-label="Levels">
-        <a href="./" aria-current="page">Open field</a>
-        <a href="./singularity.html">Singularity</a>
-      </nav>
+    <div class="chrome chrome--top-left">
+      <h1>Instrument Kit</h1>
+      <span id="now-playing" class="now-playing"></span>
     </div>
 
     <div class="chrome chrome--top-right">
+      <button id="back" type="button" class="back">&larr; all instruments</button>
       <button id="mute" type="button" aria-pressed="false">sound on</button>
     </div>
 
     <div id="invitation">
-      <p>Swipe the blue orb</p>
-      <small>then click anywhere &mdash; hold to grow it bigger</small>
+      <p>Pick up an instrument</p>
+      <small>or hear the example beat &mdash; six instruments, one tuning</small>
     </div>
 
-    <div class="chrome chrome--bottom">
-      <h1>Sound Garden &middot; Open Field</h1>
+    <div id="transport" class="transport" data-state="idle">
+      <button id="demo" type="button" class="demo">&#9654; example beat</button>
+      <button id="record" type="button" aria-pressed="false" class="record">record</button>
+      <button id="play" type="button" aria-pressed="false">play</button>
+      <button id="clear" type="button">clear</button>
+      <p class="legend">
+        <kbd>space</kbd> record &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> pick &middot;
+        <kbd>esc</kbd> back &middot; <kbd>0</kbd> mute
+      </p>
     </div>
 
     <div class="chrome chrome--bottom-right">
-      <p class="legend">
-        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> steer &middot;
-        <kbd>&larr;&uarr;&darr;&rarr;</kbd> aim &middot; <kbd>space</kbd> grow &middot; scroll or
-        <kbd>+</kbd><kbd>&minus;</kbd> zoom &middot; <kbd>M</kbd> mute &middot; <kbd>R</kbd> reset
-      </p>
-      <a class="next" href="./singularity.html">Next <span aria-hidden="true">&rarr;</span></a>
+      <nav aria-label="Primary">
+        <a class="archive-link" href="./archive/osmos/open-field.html">
+          Earlier work: the orb garden
+        </a>
+      </nav>
     </div>
 
     <script type="module" src="./main.ts"></script>

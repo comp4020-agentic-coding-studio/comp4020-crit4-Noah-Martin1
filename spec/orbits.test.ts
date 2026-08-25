@@ -1,10 +1,13 @@
+// The archived Osmos instrument's orbital contract. Kept green so the
+// archive cannot rot silently, even though it is no longer worked on.
+//
 // The singularity level's promise: a satellite left alone stays where it was
 // put, and the only thing that takes it off its orbit is being hit. Both halves
 // matter — a system that drifts on its own makes the player's interference
 // unreadable, and a system nothing can disturb is not an instrument.
 
 import { describe, expect, it } from "vitest";
-import { type World, makeOrb, orbitalSpeed, step } from "../src/world.ts";
+import { type World, makeOrb, orbitalSpeed, step } from "../archive/osmos/world.ts";
 
 const SUB_STEP = 1 / 120;
 

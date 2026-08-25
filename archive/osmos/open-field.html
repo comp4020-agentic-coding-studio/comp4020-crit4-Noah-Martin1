@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Archive · Sound Garden — Open Field</title>
+    <meta
+      name="description"
+      content="Flick a blue orb through an empty field and grow new ones around it. Every wall, bump and absorption is a note from one scale, synthesised live in the browser."
+    />
+
+    <!-- The link-preview card. It resolves against this page, like any link. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="../../card.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="stylesheet" href="./osmos.css" />
+  </head>
+  <body>
+    <canvas id="stage" aria-label="An open field of orbs that sound when they touch"></canvas>
+
+    <div class="chrome chrome--top">
+      <nav aria-label="Primary">
+        <a href="../../">Home</a>
+        <a href="./open-field.html" aria-current="page">Open field</a>
+        <a href="./singularity.html">Singularity</a>
+      </nav>
+    </div>
+
+    <div class="chrome chrome--top-right">
+      <button id="mute" type="button" aria-pressed="false">sound on</button>
+    </div>
+
+    <div id="invitation">
+      <p>Swipe the blue orb</p>
+      <small>then click anywhere &mdash; hold to grow it bigger</small>
+    </div>
+
+    <div class="chrome chrome--bottom">
+      <h1>Sound Garden &middot; Open Field</h1>
+    </div>
+
+    <div class="chrome chrome--bottom-right">
+      <p class="legend">
+        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> steer &middot;
+        <kbd>&larr;&uarr;&darr;&rarr;</kbd> aim &middot; <kbd>space</kbd> grow &middot; scroll or
+        <kbd>+</kbd><kbd>&minus;</kbd> zoom &middot; <kbd>M</kbd> mute &middot; <kbd>R</kbd> reset
+      </p>
+      <a class="next" href="./singularity.html">Next <span aria-hidden="true">&rarr;</span></a>
+    </div>
+
+    <script type="module" src="./open-field.ts"></script>
+  </body>
+</html>

@@ -1,3 +1,5 @@
+// FROZEN — part of the archived Osmos instrument. See instrument.ts.
+
 // What an Osmos mote actually looks like, layer by layer.
 //
 // It is not a filled circle. It is a translucent shell: you can see the ones

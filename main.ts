@@ -1,4 +1,4 @@
-// Level one: an empty field and one blue orb.
-import { start } from "./src/instrument.ts";
+// The instrument kit: four instruments, a loop recorder, one harmony.
+import { start } from "./src/stage.ts";
 
-start("open");
+start();

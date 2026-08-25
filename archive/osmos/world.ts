@@ -1,3 +1,5 @@
+// FROZEN — part of the archived Osmos instrument. See instrument.ts.
+
 // The world: orbs, gravity, walls, and absorption. This module knows nothing
 // about sound or pixels — it reports what happened as a list of events, and
 // the caller decides what that should look and sound like.

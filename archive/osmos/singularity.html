@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sound Garden — Singularity</title>
+    <title>Archive · Sound Garden — Singularity</title>
     <meta
       name="description"
       content="A heavy orb holding three shells of satellites in stable orbit. Disturb it and the whole system re-tunes itself, one note per collision."
@@ -11,10 +11,10 @@
 
     <!-- Same card, same directory: this page sits alongside index.html. -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="./card.png" />
+    <meta property="og:image" content="../../card.png" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./osmos.css" />
   </head>
   <body>
     <canvas
@@ -23,8 +23,9 @@
     ></canvas>
 
     <div class="chrome chrome--top">
-      <nav aria-label="Levels">
-        <a href="./">Open field</a>
+      <nav aria-label="Primary">
+        <a href="../../">Home</a>
+        <a href="./open-field.html">Open field</a>
         <a href="./singularity.html" aria-current="page">Singularity</a>
       </nav>
     </div>
@@ -48,7 +49,7 @@
         <kbd>&larr;&uarr;&darr;&rarr;</kbd> aim &middot; <kbd>space</kbd> grow &middot; scroll or
         <kbd>+</kbd><kbd>&minus;</kbd> zoom &middot; <kbd>M</kbd> mute &middot; <kbd>R</kbd> reset
       </p>
-      <a class="next" href="./">&larr; Open field</a>
+      <a class="next" href="../../">&larr; Leave the archive</a>
     </div>
 
     <script type="module" src="./singularity.ts"></script>

@@ -1,0 +1,224 @@
+/* Shared chrome for both levels. The canvas is the page; everything else is
+   deliberately quiet and sits in the corners so the field stays the subject. */
+
+:root {
+  color-scheme: dark;
+  --ink: #dbe6f2;
+  --ink-dim: rgba(219, 230, 242, 0.42);
+  --ink-faint: rgba(219, 230, 242, 0.26);
+  --blue: #7fd4f2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #03040a;
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+/* --- corners --------------------------------------------------------------- */
+
+.chrome {
+  position: fixed;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.1rem 1.3rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+
+.chrome--top {
+  top: 0;
+  left: 0;
+}
+
+.chrome--top-right {
+  top: 0;
+  right: 0;
+}
+
+.chrome--bottom {
+  bottom: 0;
+  left: 0;
+}
+
+.chrome--bottom-right {
+  bottom: 0;
+  right: 0;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+a {
+  color: var(--ink-dim);
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--ink);
+}
+
+a[aria-current="page"] {
+  color: var(--blue);
+}
+
+h1 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* The control legend: present for anyone who wants it, faint enough to ignore.
+   The instrument must be playable without reading it. */
+.legend {
+  margin: 0;
+  color: var(--ink-faint);
+  font-size: 0.72rem;
+  text-align: right;
+  max-width: 20rem;
+}
+
+.legend kbd {
+  font: inherit;
+  color: var(--ink-dim);
+  border: 1px solid rgba(219, 230, 242, 0.16);
+  border-radius: 3px;
+  padding: 0 0.28em;
+}
+
+button {
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  background: rgba(219, 230, 242, 0.04);
+  border: 1px solid rgba(219, 230, 242, 0.14);
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+button:hover,
+button:focus-visible {
+  color: var(--ink);
+  border-color: rgba(219, 230, 242, 0.34);
+}
+
+.next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(127, 212, 242, 0.28);
+  border-radius: 999px;
+  padding: 0.34rem 0.95rem;
+  color: var(--blue);
+}
+
+.next:hover,
+.next:focus-visible {
+  border-color: rgba(127, 212, 242, 0.6);
+  color: #b9e8fa;
+}
+
+/* --- the invitation -------------------------------------------------------- */
+/* The opening screen is one instruction, and it dissolves the instant the
+   player acts on it. */
+
+#invitation {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 1.1s ease;
+}
+
+#invitation.gone {
+  opacity: 0;
+}
+
+#invitation p {
+  margin: 0;
+  font-size: clamp(1.15rem, 3.4vw, 1.7rem);
+  font-weight: 300;
+  letter-spacing: 0.01em;
+  animation: breathe 4.2s ease-in-out infinite;
+}
+
+#invitation small {
+  color: var(--ink-dim);
+  font-size: 0.82rem;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #invitation p {
+    animation: none;
+    opacity: 0.92;
+  }
+}
+
+@media (max-width: 34rem) {
+  .legend {
+    display: none;
+  }
+
+  .chrome {
+    padding: 0.85rem 0.95rem;
+    gap: 0.7rem;
+  }
+}

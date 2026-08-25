@@ -1,59 +1,18 @@
-// The instrument's voice. Everything you hear is synthesised here — there are
-// no audio files in this repo — so the browser really is the instrument rather
-// than a player for one.
+// The kit's voice. Everything you hear is synthesised here — there are no audio
+// files in this repo — so the browser really is the instrument rather than a
+// player for one.
 //
-// Two rules hold the sound design together:
-//   1. Every pitch comes from one minor pentatonic scale, so no combination of
-//      orbs can clash. There is no wrong note to hit.
-//   2. Size decides pitch. Big orbs speak low and slow, small ones high and
-//      short, which is what makes the picture and the sound feel like one
-//      thing.
+// One rule holds the sound design together: there is a single chord at any
+// moment, and every instrument is tuned to it by `chordLadder`. Nothing picks a
+// frequency of its own, so no combination of instruments can clash and there is
+// no wrong note to play.
 
 import { pluckBuffer } from "./karplus.ts";
-
-const PENTATONIC_STEPS = [0, 3, 5, 7, 10];
-const ROOT_HZ = 55; // A1
-
-/** A minor pentatonic ladder, low to high. */
-function buildScale(octaves: number): number[] {
-  const scale: number[] = [];
-  for (let octave = 0; octave < octaves; octave++) {
-    for (const step of PENTATONIC_STEPS) {
-      scale.push(ROOT_HZ * 2 ** (octave + step / 12));
-    }
-  }
-  return scale;
-}
-
-// Four octaves, not six: the top of a six-octave ladder is up near 3.5kHz,
-// which is where small orbs were screaming. The whole instrument now lives
-// between A1 and roughly G5, and absorption sits low in that.
-const SCALE = buildScale(4);
-
-/**
- * Radius to pitch, logarithmically: doubling an orb's size drops it by a
- * consistent musical interval rather than a consistent number of hertz.
- * Largest orb → lowest note.
- */
-export function pitchForRadius(radius: number, minRadius: number, maxRadius: number): number {
-  const span = Math.log(maxRadius) - Math.log(minRadius);
-  const t = (Math.log(Math.max(radius, minRadius)) - Math.log(minRadius)) / span;
-  const clamped = Math.min(1, Math.max(0, t));
-  const index = Math.round((1 - clamped) * (SCALE.length - 1));
-  return SCALE[index];
-}
 
 // --- the graph ---------------------------------------------------------------
 // Nothing here is constructed until the player's first gesture. The autoplay
 // policy would leave a context suspended anyway, but not building one at all
 // means the page is provably silent until it is played.
-
-/** A note that keeps sounding until released, and can be re-pitched while it does. */
-export type HeldVoice = {
-  /** Glide to a new pitch. */
-  follow: (hz: number) => void;
-  release: () => void;
-};
 
 let ac: AudioContext | null = null;
 let masterGain: GainNode | null = null;
@@ -168,11 +127,10 @@ function build(): AudioContext {
 }
 
 /**
- * The ambient pad. Off for the instrument kit — a harp wants a room, not a
- * drone sitting under every note — and left on for the archived orb garden,
- * which was built around it.
+ * The ambient pad. Off by default: the kit's instruments want a room around
+ * them, not a drone sitting under every note.
  */
-let padEnabled = true;
+let padEnabled = false;
 
 export function setPadEnabled(on: boolean): void {
   padEnabled = on;
@@ -252,10 +210,6 @@ export function wake(): void {
   padGain?.gain.setTargetAtTime(padEnabled ? 1 : 0, context.currentTime, 2.5);
 }
 
-export function isAwake(): boolean {
-  return ac !== null;
-}
-
 // --- harmony -----------------------------------------------------------------
 // The scale alone was not enough. Any two notes of a pentatonic sound fine
 // together, but a field of orbs picking freely from four octaves of it never
@@ -267,8 +221,11 @@ export function isAwake(): boolean {
 // Two orbs sounding at once are then always an interval of the same chord, and
 // when the chord turns, the whole field turns with it.
 
-/** Chords as semitone classes above the root. All drawn from the scale, so the
- *  progression can never fight the orbs. */
+/** Everything in the kit is a whole number of semitones above this. */
+const ROOT_HZ = 55; // A1
+
+/** Chords as semitone classes above the root, all from one minor pentatonic —
+ *  so no two of them can put an instrument out of key with another. */
 const PROGRESSION: number[][] = [
   [0, 3, 7], // A  C  E   — Am
   [3, 7, 10], // C  E  G   — C
@@ -283,27 +240,6 @@ const CHORD_SECONDS = 19;
 const GLIDE_SECONDS = 8;
 
 let chordIndex = 0;
-
-/**
- * The nearest note of the current chord, keeping the pitch roughly where it
- * was. Octaves are free — a pitch class is a pitch class — so an orb keeps its
- * register and only its note moves.
- */
-export function snapToChord(hz: number): number {
-  const semitones = Math.log2(hz / ROOT_HZ) * 12;
-  let best = hz;
-  let bestDistance = Number.POSITIVE_INFINITY;
-  for (const pitchClass of PROGRESSION[chordIndex]) {
-    const octave = Math.round((semitones - pitchClass) / 12);
-    const candidate = pitchClass + octave * 12;
-    const distance = Math.abs(candidate - semitones);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      best = ROOT_HZ * 2 ** (candidate / 12);
-    }
-  }
-  return best;
-}
 
 /** Bumped every time the chord turns, so callers know to retune. */
 let chordTurns = 0;
@@ -335,6 +271,23 @@ export function chordLadder(count: number, lowestHz = 82): number[] {
 function padFrequency(voice: number, chord: number[]): number {
   const pitchClass = chord[voice % chord.length];
   return ROOT_HZ * 2 ** (PAD_OCTAVES[voice] + pitchClass / 12);
+}
+
+/**
+ * The progression's own clock.
+ *
+ * This used to live inside the pad, which meant the harmony only turned because
+ * a piece of ambience nobody switches on happened to be running a timer. The
+ * chord is the thing every instrument is tuned to; it cannot depend on that.
+ */
+function startProgression(onTurn: (chord: number[]) => void): void {
+  const step = (): void => {
+    chordIndex = (chordIndex + 1) % PROGRESSION.length;
+    chordTurns++;
+    onTurn(PROGRESSION[chordIndex]);
+    window.setTimeout(step, CHORD_SECONDS * 1000);
+  };
+  window.setTimeout(step, CHORD_SECONDS * 1000);
 }
 
 function startPad(context: AudioContext, out: GainNode): void {
@@ -369,10 +322,7 @@ function startPad(context: AudioContext, out: GainNode): void {
     return { osc, sub };
   });
 
-  const step = (): void => {
-    chordIndex = (chordIndex + 1) % PROGRESSION.length;
-    chordTurns++;
-    const chord = PROGRESSION[chordIndex];
+  startProgression((chord) => {
     const now = context.currentTime;
     voices.forEach(({ osc, sub }, i) => {
       // Gliding rather than re-triggering makes the change feel like weather
@@ -381,223 +331,7 @@ function startPad(context: AudioContext, out: GainNode): void {
       osc.frequency.exponentialRampToValueAtTime(hz, now + GLIDE_SECONDS);
       sub.frequency.exponentialRampToValueAtTime(hz / 2, now + GLIDE_SECONDS);
     });
-    window.setTimeout(step, CHORD_SECONDS * 1000);
-  };
-  window.setTimeout(step, CHORD_SECONDS * 1000);
-}
-
-// --- the sustained voices ----------------------------------------------------
-// Each of the largest orbs on screen holds a quiet continuous note for as long
-// as it is there. This is the layer that was missing: the orbs *are* the chord,
-// so the field has a harmony of its own that swells and re-voices as orbs grow,
-// arrive and are eaten — with the rhythmic pulses landing on top of it as
-// accents rather than being the only thing you hear.
-
-export type Drone = {
-  /** Glide toward a pitch, level and stereo position. */
-  set: (hz: number, level: number, pan: number) => void;
-  release: () => void;
-};
-
-export function makeDrone(channel = "main"): Drone | null {
-  const context = build();
-  if (!ac) return null;
-  const now = context.currentTime;
-
-  const out = new GainNode(context, { gain: 0 });
-  const panner = new StereoPannerNode(context, { pan: 0 });
-  const filter = new BiquadFilterNode(context, { type: "lowpass", frequency: 700, Q: 1.4 });
-  const sawA = new OscillatorNode(context, { type: "sawtooth", frequency: 110, detune: -6 });
-  const sawB = new OscillatorNode(context, { type: "sawtooth", frequency: 110, detune: 7 });
-  const sub = new OscillatorNode(context, { type: "sine", frequency: 55 });
-  const subLevel = new GainNode(context, { gain: 0.6 });
-  const sawLevel = new GainNode(context, { gain: 0.4 });
-
-  sawA.connect(sawLevel);
-  sawB.connect(sawLevel);
-  sawLevel.connect(filter);
-  sub.connect(subLevel).connect(filter);
-  filter.connect(out).connect(panner).connect(channelNode(channel));
-  for (const node of [sawA, sawB, sub]) node.start(now);
-
-  let released = false;
-
-  return {
-    set(hz, level, pan) {
-      if (released) return;
-      const at = context.currentTime;
-      const safe = Math.max(20, hz);
-      // Long time constants throughout: a drone that snapped to each new pitch
-      // would click, and these are meant to swell.
-      sawA.frequency.setTargetAtTime(safe, at, 0.7);
-      sawB.frequency.setTargetAtTime(safe, at, 0.7);
-      sub.frequency.setTargetAtTime(safe / 2, at, 0.7);
-      filter.frequency.setTargetAtTime(safe * 4 + 260, at, 0.7);
-      out.gain.setTargetAtTime(level, at, 0.45);
-      panner.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), at, 0.3);
-    },
-    release() {
-      if (released) return;
-      released = true;
-      const at = context.currentTime;
-      out.gain.cancelScheduledValues(at);
-      out.gain.setValueAtTime(out.gain.value, at);
-      out.gain.linearRampToValueAtTime(0, at + 1.4);
-      for (const node of [sawA, sawB, sub]) node.stop(at + 1.5);
-    },
-  };
-}
-
-// --- the orb voice -----------------------------------------------------------
-
-export type ToneOptions = {
-  /** Seconds until silence. */
-  duration?: number;
-  /** Peak level, before the compressor. */
-  level?: number;
-  /** 0 = dark and muffled, 1 = open and present. */
-  brightness?: number;
-  /** -1 left, 1 right. */
-  pan?: number;
-  /** 0 = pure tone, 1 = a full noise transient on the attack. */
-  noise?: number;
-  /** Which channel — and so which room — this note lives in. */
-  channel?: string;
-};
-
-/**
- * The sound of an orb: two saws a few cents apart plus a sine sub, behind a
- * lowpass that closes as the note decays. The detuning is the whole reason it
- * reads as an instrument rather than a test tone.
- */
-export function playTone(frequency: number, options: ToneOptions = {}): void {
-  const context = build();
-  if (!ac || activeVoices >= MAX_VOICES) return;
-
-  const {
-    duration = 1,
-    level = 0.08,
-    brightness = 0.5,
-    pan = 0,
-    noise: grit = 0,
-    channel = "main",
-  } = options;
-  const now = context.currentTime;
-
-  const out = new GainNode(context, { gain: 0 });
-  const panner = new StereoPannerNode(context, { pan: Math.max(-1, Math.min(1, pan)) });
-
-  // The filter opens on the attack and closes over the decay, so a note has a
-  // shape — a "ping" that settles — instead of a flat sustain.
-  const open = frequency * (3 + brightness * 9) + 220;
-  const filter = new BiquadFilterNode(context, { type: "lowpass", frequency: open, Q: 3.5 });
-  filter.frequency.setValueAtTime(open, now);
-  filter.frequency.exponentialRampToValueAtTime(
-    Math.max(140, frequency * 1.6),
-    now + duration * 0.85,
-  );
-
-  const sawA = new OscillatorNode(context, { type: "sawtooth", frequency, detune: -7 });
-  const sawB = new OscillatorNode(context, { type: "sawtooth", frequency, detune: +8 });
-  const sub = new OscillatorNode(context, { type: "sine", frequency: frequency / 2 });
-  const subLevel = new GainNode(context, { gain: 0.55 });
-  const sawLevel = new GainNode(context, { gain: 0.5 });
-
-  sawA.connect(sawLevel);
-  sawB.connect(sawLevel);
-  sawLevel.connect(filter);
-  sub.connect(subLevel).connect(filter);
-  filter.connect(out).connect(panner).connect(channelNode(channel));
-
-  const attack = 0.006 + (1 - brightness) * 0.05;
-  out.gain.setValueAtTime(0, now);
-  out.gain.linearRampToValueAtTime(level, now + attack);
-  out.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-  // The contact transient: a band of noise around the note's own pitch, gone
-  // in a few dozen milliseconds. It reads as the surfaces meeting rather than
-  // as a separate sound.
-  if (grit > 0.01 && noise) {
-    const burst = new AudioBufferSourceNode(context, { buffer: noise });
-    const band = new BiquadFilterNode(context, {
-      type: "bandpass",
-      frequency: Math.min(6000, frequency * 3.2),
-      Q: 1.1,
-    });
-    const shape = new GainNode(context, { gain: 0 });
-    const tail = 0.05 + grit * 0.16;
-    shape.gain.setValueAtTime(0, now);
-    shape.gain.linearRampToValueAtTime(level * grit * 1.5, now + 0.004);
-    shape.gain.exponentialRampToValueAtTime(0.0001, now + tail);
-    burst.connect(band).connect(shape).connect(panner);
-    burst.start(now);
-    burst.stop(now + tail + 0.02);
-  }
-
-  activeVoices++;
-  for (const node of [sawA, sawB, sub]) {
-    node.start(now);
-    node.stop(now + duration + 0.05);
-  }
-  sawA.onended = () => {
-    activeVoices--;
-  };
-}
-
-/**
- * A held voice whose pitch can be moved — used while the player holds to grow
- * a new orb, so growing it is something you hear as well as see.
- */
-export function holdTone(frequency: number, level = 0.055, channel = "main"): HeldVoice | null {
-  const context = build();
-  if (!ac) return null;
-  const now = context.currentTime;
-
-  const out = new GainNode(context, { gain: 0 });
-  const filter = new BiquadFilterNode(context, {
-    type: "lowpass",
-    frequency: frequency * 6 + 300,
-    Q: 2,
   });
-  const sawA = new OscillatorNode(context, { type: "sawtooth", frequency, detune: -7 });
-  const sawB = new OscillatorNode(context, { type: "sawtooth", frequency, detune: +8 });
-  const sub = new OscillatorNode(context, { type: "sine", frequency: frequency / 2 });
-  const subLevel = new GainNode(context, { gain: 0.5 });
-  const sawLevel = new GainNode(context, { gain: 0.45 });
-
-  sawA.connect(sawLevel);
-  sawB.connect(sawLevel);
-  sawLevel.connect(filter);
-  sub.connect(subLevel).connect(filter);
-  filter.connect(out).connect(channelNode(channel));
-
-  out.gain.setValueAtTime(0, now);
-  out.gain.linearRampToValueAtTime(level, now + 0.08);
-  for (const node of [sawA, sawB, sub]) node.start(now);
-
-  return {
-    follow(hz: number) {
-      // Gliding, not stepping: the pitch slides down as the orb grows, which
-      // is the feedback that makes holding feel like shaping something.
-      const safe = Math.max(20, hz);
-      const at = context.currentTime;
-      sawA.frequency.setTargetAtTime(safe, at, 0.05);
-      sawB.frequency.setTargetAtTime(safe, at, 0.05);
-      sub.frequency.setTargetAtTime(safe / 2, at, 0.05);
-      filter.frequency.setTargetAtTime(safe * 6 + 300, at, 0.08);
-    },
-    release() {
-      const at = context.currentTime;
-      out.gain.cancelScheduledValues(at);
-      out.gain.setValueAtTime(out.gain.value, at);
-      out.gain.exponentialRampToValueAtTime(0.0001, at + 0.35);
-      for (const node of [sawA, sawB, sub]) node.stop(at + 0.45);
-    },
-  };
-}
-
-export function now(): number {
-  return ac ? ac.currentTime : 0;
 }
 
 // --- the plucked string ------------------------------------------------------
@@ -613,12 +347,34 @@ export type PluckVoice = {
 
 export function playPluck(
   frequency: number,
-  options: { hardness?: number; level?: number; pan?: number; channel?: string } = {},
+  options: {
+    hardness?: number;
+    level?: number;
+    pan?: number;
+    channel?: string;
+    /**
+     * Tames the high partials, 0..1. Karplus–Strong's loop filter is a two-tap
+     * average, which is the gentlest lowpass there is — so a long, low string
+     * keeps its brightness for a good half-second, and that is exactly what
+     * "twangy" means. A real string on a real instrument loses its top far
+     * faster than that. Lower is darker and rounder.
+     */
+    tone?: number;
+    /** Seconds to silence, if the string should ring for less than its buffer. */
+    decay?: number;
+  } = {},
 ): PluckVoice | null {
   const context = build();
   if (activeVoices >= MAX_VOICES) return null;
 
-  const { hardness = 0.6, level = 0.3, pan = 0, channel = "main" } = options;
+  const {
+    hardness = 0.6,
+    level = 0.3,
+    pan = 0,
+    channel = "main",
+    tone,
+    decay,
+  } = options;
   const { buffer, playbackRate } = pluckBuffer(context, frequency, hardness);
   // The pitch the cached buffer was rendered at; bends are expressed against it.
   const rendered = frequency / playbackRate;
@@ -636,13 +392,34 @@ export function playPluck(
   });
   const gain = new GainNode(context, { gain: level * (0.94 + Math.random() * 0.12) });
   const panner = new StereoPannerNode(context, { pan: Math.max(-1, Math.min(1, pan)) });
-  source.connect(gain).connect(panner).connect(channelNode(channel));
+  source.connect(gain);
+
+  if (tone === undefined) {
+    gain.connect(panner);
+  } else {
+    // Opens on the attack and closes as the note rings, so the brightness is in
+    // the pluck rather than spread over the whole note.
+    const open = 620 + tone * 7200;
+    const shade = new BiquadFilterNode(context, { type: "lowpass", frequency: open, Q: 0.6 });
+    shade.frequency.setValueAtTime(open, now);
+    shade.frequency.exponentialRampToValueAtTime(Math.max(260, open * 0.3), now + 1.4);
+    gain.connect(shade).connect(panner);
+  }
+  panner.connect(channelNode(channel));
 
   activeVoices++;
   source.onended = () => {
     activeVoices--;
   };
   source.start(now, skip);
+
+  if (decay !== undefined) {
+    // The cached buffer is sized for the longest instrument that might want this
+    // pitch; a shorter one just fades out early.
+    gain.gain.setValueAtTime(gain.gain.value, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + decay);
+    source.stop(now + decay + 0.05);
+  }
 
   let stopped = false;
 

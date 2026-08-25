@@ -239,6 +239,14 @@ export function makeBells(): Instrument {
       return true;
     },
 
+    keyHints() {
+      return bells.map((bell, i) => ({
+        label: KEYS[i] ?? "",
+        x: bell.x,
+        y: bell.y + bell.radius + 22,
+      }));
+    },
+
     keyUp() {},
     blur() {},
   };

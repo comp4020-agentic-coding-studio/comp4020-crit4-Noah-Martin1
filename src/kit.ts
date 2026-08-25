@@ -72,6 +72,14 @@ export type Instrument = {
   pointerUp(p: Pointer, emit: Emit): void;
   keyDown(key: string, shift: boolean, emit: Emit): boolean;
   keyUp(key: string, emit: Emit): void;
+  /**
+   * Where each playable key sits on the instrument, in its own rect's
+   * coordinates. Drawn on top of the instrument as labels, so which keys play it
+   * is answered by looking at it rather than by reading a legend — and so a
+   * keyboard player is never left guessing.
+   */
+  keyHints(): { label: string; x: number; y: number }[];
+
   /** Release any held state — called when the instrument closes or loses focus. */
   blur(): void;
 };

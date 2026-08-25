@@ -57,19 +57,27 @@ const HITS: Hit[] = [
   ["blocks", 4, 3.25, 0.44],
   ["blocks", 4, 11.25, 0.44],
 
-  // --- bass: the anchor -----------------------------------------------------
-  // Sparse on purpose. The notes ring for seconds, so more than a handful per
-  // bar and it stops being a bass line and starts being a chord.
-  ["bass", 0, 0, 0.78, 0.35],
-  ["bass", 0, 2.5, 0.55, 0.4],
-  ["bass", 1, 3.5, 0.5, 0.45],
-  ["bass", 0, 4, 0.72, 0.35],
-  ["bass", 2, 6, 0.58, 0.5],
-  ["bass", 0, 8, 0.78, 0.35],
-  ["bass", 1, 10.5, 0.55, 0.45],
-  ["bass", 2, 12, 0.7, 0.5],
-  ["bass", 1, 14, 0.5, 0.45],
-  ["bass", 0, 15.5, 0.44, 0.4], // a pickup, leaning into the wrap
+  // --- guitar: the anchor ---------------------------------------------------
+  // Sparse on purpose. The notes ring for seconds, so more than a handful a bar
+  // and it stops being a line and becomes a chord. The two strums at the phrase
+  // ends are three strings a few milliseconds apart, which is what a strum is.
+  ["guitar", 0, 0, 0.78, 0.35],
+  ["guitar", 0, 2.5, 0.55, 0.4],
+  ["guitar", 1, 3.5, 0.5, 0.45],
+  ["guitar", 0, 4, 0.72, 0.35],
+  ["guitar", 2, 6, 0.58, 0.5],
+  ["guitar", 0, 8, 0.78, 0.35],
+  ["guitar", 1, 10.5, 0.55, 0.45],
+  ["guitar", 2, 12, 0.7, 0.5],
+  ["guitar", 1, 14, 0.5, 0.45],
+  ["guitar", 0, 15.5, 0.44, 0.4], // a pickup, leaning into the wrap
+  // Strums: three strings 30ms apart, at the end of the second and fourth bars.
+  ["guitar", 2, 7.5, 0.4, 0.55],
+  ["guitar", 3, 7.55, 0.38, 0.6],
+  ["guitar", 4, 7.6, 0.36, 0.65],
+  ["guitar", 3, 11.5, 0.4, 0.55],
+  ["guitar", 4, 11.55, 0.38, 0.6],
+  ["guitar", 5, 11.6, 0.36, 0.65],
 
   // --- marimba: the figure --------------------------------------------------
   // The same five-note shape four times, walking up a rung each phrase, struck

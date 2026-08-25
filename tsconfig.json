@@ -18,5 +18,5 @@
   },
   // `*.ts` is root-level only: a subdirectory left out of this list is not
   // typechecked at all, and `pnpm typecheck` passes while saying nothing.
-  "include": ["*.ts", "src", "archive", "prototypes", "spec", "scripts"]
+  "include": ["*.ts", "src", "prototypes", "spec", "scripts"]
 }

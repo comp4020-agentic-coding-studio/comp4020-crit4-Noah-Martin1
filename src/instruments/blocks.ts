@@ -212,6 +212,14 @@ export function makeBlocks(): Instrument {
       return true;
     },
 
+    keyHints() {
+      return blocks.map((block, i) => ({
+        label: KEYS[i] ?? "",
+        x: block.x + block.width / 2,
+        y: block.y + block.height + 16,
+      }));
+    },
+
     keyUp() {},
     blur() {},
   };

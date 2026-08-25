@@ -6,7 +6,7 @@
     <title>Instrument Kit</title>
     <meta
       name="description"
-      content="Six instruments in one tuning — harp, bass, marimba, blocks, drums, bells. Pick one up, play it, and layer a loop. Every note is synthesised live in the browser."
+      content="Six instruments in one tuning — harp, guitar, marimba, blocks, drums, bells. Pick one up, play it, and layer a loop. Every note is synthesised live in the browser."
     />
 
     <!-- The link-preview card. It resolves against this page, like any link. -->
@@ -19,14 +19,16 @@
   <body>
     <canvas id="stage" aria-label="Four instruments you can pick up and play"></canvas>
 
-    <div class="chrome chrome--top-left">
-      <h1>Instrument Kit</h1>
-      <span id="now-playing" class="now-playing"></span>
-    </div>
-
-    <div class="chrome chrome--top-right">
-      <button id="back" type="button" class="back">&larr; all instruments</button>
-      <button id="mute" type="button" aria-pressed="false">sound on</button>
+    <div class="bar bar--top">
+      <div class="bar__left">
+        <h1>Instrument Kit</h1>
+        <span id="now-playing" class="now-playing"></span>
+        <span id="instrument-keys" class="instrument-keys"></span>
+      </div>
+      <div class="bar__right">
+        <button id="back" type="button" class="back">&larr; all instruments</button>
+        <button id="mute" type="button" aria-pressed="false">sound on</button>
+      </div>
     </div>
 
     <div id="invitation">
@@ -34,22 +36,29 @@
       <small>or hear the example beat &mdash; six instruments, one tuning</small>
     </div>
 
-    <div id="transport" class="transport" data-state="idle">
-      <button id="demo" type="button" class="demo">&#9654; example beat</button>
-      <button id="record" type="button" aria-pressed="false" class="record">record</button>
-      <button id="play" type="button" aria-pressed="false">play</button>
-      <button id="clear" type="button">clear</button>
-      <p class="legend">
-        <kbd>space</kbd> record &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> pick &middot;
-        <kbd>esc</kbd> back &middot; <kbd>0</kbd> mute
-      </p>
-    </div>
+    <div class="bar bar--bottom">
+      <div class="bar__spacer"></div>
 
-    <div class="chrome chrome--bottom-right">
-      <nav aria-label="Primary">
-        <a class="archive-link" href="./archive/osmos/open-field.html">
-          Earlier work: the orb garden
-        </a>
+      <div id="transport" class="transport" data-state="idle">
+        <div class="transport__buttons">
+          <button id="demo" type="button" class="demo">&#9654; example beat</button>
+          <button id="record" type="button" aria-pressed="false" class="record">record</button>
+          <button id="play" type="button" aria-pressed="false">play</button>
+          <button id="clear" type="button">clear</button>
+        </div>
+        <p class="legend">
+          <kbd>space</kbd> record &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> pick &middot;
+          <kbd>esc</kbd> back &middot; <kbd>0</kbd> mute
+        </p>
+      </div>
+
+      <nav aria-label="Instruments" class="instrument-nav">
+        <a href="#harp" data-instrument="0">Harp</a>
+        <a href="#guitar" data-instrument="1">Guitar</a>
+        <a href="#marimba" data-instrument="2">Marimba</a>
+        <a href="#blocks" data-instrument="3">Blocks</a>
+        <a href="#drums" data-instrument="4">Drums</a>
+        <a href="#bells" data-instrument="5">Bells</a>
       </nav>
     </div>
 

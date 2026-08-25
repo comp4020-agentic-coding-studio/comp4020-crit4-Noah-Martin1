@@ -225,6 +225,14 @@ export function makeDrum(): Instrument {
       return true;
     },
 
+    keyHints() {
+      return skins.map((skin, i) => ({
+        label: KEYS[i] ?? "",
+        x: skin.x,
+        y: skin.y + skin.radius + 20,
+      }));
+    },
+
     keyUp() {},
     blur() {},
   };

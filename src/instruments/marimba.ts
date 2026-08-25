@@ -236,6 +236,14 @@ export function makeMarimba(): Instrument {
       return true;
     },
 
+    keyHints() {
+      return bars.map((bar, i) => ({
+        label: KEYS[i] ?? "",
+        x: bar.x - 16,
+        y: bar.y + bar.height / 2,
+      }));
+    },
+
     keyUp() {},
     blur() {},
   };

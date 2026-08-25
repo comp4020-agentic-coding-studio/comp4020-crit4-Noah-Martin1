@@ -372,6 +372,18 @@ export function makeHarp(): Instrument {
       return true;
     },
 
+    keyHints() {
+      const KEYS = "asdfghjkl;";
+      const y = bottom() + 16;
+      return KEYS.split("").map((label, slot) => {
+        const index =
+          lines.length <= KEYS.length
+            ? Math.min(slot, lines.length - 1)
+            : Math.round((slot / (KEYS.length - 1)) * (lines.length - 1));
+        return { label, x: lines[index]?.x ?? rect.x, y };
+      });
+    },
+
     keyUp(key) {
       if (key !== "ArrowUp" && key !== "ArrowDown") return;
       const line = lines[lastPlayed];

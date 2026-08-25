@@ -22,7 +22,7 @@ import {
   wake,
 } from "./audio.ts";
 import { need } from "./dom.ts";
-import { makeBass } from "./instruments/bass.ts";
+import { makeGuitar } from "./instruments/guitar.ts";
 import { makeBells } from "./instruments/bells.ts";
 import { makeBlocks } from "./instruments/blocks.ts";
 import { makeDrum } from "./instruments/drum.ts";
@@ -33,10 +33,8 @@ import { type Instrument, type Note, type Rect, insideRect, lerpRect } from "./k
 import { LOOP_SECONDS, makeRecorder } from "./recorder.ts";
 
 const OPEN_SECONDS = 0.5;
-/** Room at the top of the window for the loop bar. */
-const HEADROOM = 46;
-/** Room at the bottom for the transport. */
-const FOOTER = 86;
+/** Air between the top bar and the loop timeline drawn under it. */
+const LOOP_GAP = 14;
 
 type Mode = "gallery" | "opening" | "open" | "closing";
 
@@ -47,6 +45,10 @@ export function start(): void {
   const invitationTitle = document.querySelector<HTMLElement>("#invitation p");
   const invitationHint = document.querySelector<HTMLElement>("#invitation small");
   const nowPlaying = document.querySelector<HTMLElement>("#now-playing");
+  const keyLegend = document.querySelector<HTMLElement>("#instrument-keys");
+  const navLinks = [...document.querySelectorAll<HTMLAnchorElement>("[data-instrument]")];
+  const topBar = document.querySelector<HTMLElement>(".bar--top");
+  const bottomBar = document.querySelector<HTMLElement>(".bar--bottom");
   const transport = document.querySelector<HTMLElement>("#transport");
   const backButton = document.querySelector<HTMLButtonElement>("#back");
   const recordButton = document.querySelector<HTMLButtonElement>("#record");
@@ -73,7 +75,19 @@ export function start(): void {
       [420, 4, 0.16],
     ],
   });
-  configureChannel("bass", { dry: 1, room: 0.11, hall: 0.02, body: [[62, 6, 0.34]] });
+  // A guitar's box: the Helmholtz note of the air inside it, the top plate, and
+  // one above that. A plucked string with no body is a rubber band, and this is
+  // most of the rest of the difference.
+  configureChannel("guitar", {
+    dry: 1,
+    room: 0.2,
+    hall: 0.05,
+    body: [
+      [104, 8, 0.4],
+      [201, 7, 0.3],
+      [415, 5, 0.15],
+    ],
+  });
   configureChannel("marimba", { dry: 1, room: 0.26, hall: 0.05 });
   configureChannel("drum", { dry: 1, room: 0.2, hall: 0.03 });
   configureChannel("blocks", { dry: 1, room: 0.28, hall: 0.04 });
@@ -81,7 +95,7 @@ export function start(): void {
 
   const instruments: Instrument[] = [
     makeHarp(),
-    makeBass(),
+    makeGuitar(),
     makeMarimba(),
     makeBlocks(),
     makeDrum(),
@@ -102,17 +116,40 @@ export function start(): void {
   let progress = 0;
   let hovered = -1;
   let cards: Rect[] = [];
+  /**
+   * How much room the HTML bars take, measured rather than assumed. Hard-coded
+   * numbers here are how the loop timeline came to be drawn straight through the
+   * title and the buttons: the CSS moved and the canvas did not know.
+   */
+  let headroom = 76;
+  let footer = 88;
+  let loopY = 58;
   /** Pointers currently pressed, so instruments can tell a drag from a hover. */
   const pressed = new Set<number>();
   /** Recent activity per instrument, so a card visibly answers when its part
    *  fires — this is what makes a loop legible while you are looking at all six
    *  of them rather than playing one. */
   const activity = new Map<string, number>();
+  /** Fades the on-screen key labels from prominent to merely legible. */
+  let hintFade = 0;
+  /** Whether this instrument's opening line is still on screen. */
+  let inviting = false;
 
   // --- layout ----------------------------------------------------------------
 
+  /** Read the bars' real heights and keep everything the canvas draws clear of
+   *  them. Called on resize, and whenever the bars' contents change. */
+  function measureChrome(): void {
+    const top = topBar?.getBoundingClientRect().height ?? 44;
+    const bottom = bottomBar?.getBoundingClientRect().height ?? 80;
+    loopY = top + LOOP_GAP;
+    // The timeline sits below the bar, and the instruments below the timeline.
+    headroom = loopY + 16;
+    footer = bottom + 8;
+  }
+
   function fullRect(): Rect {
-    return { x: 0, y: HEADROOM, width, height: height - HEADROOM - FOOTER };
+    return { x: 0, y: headroom, width, height: height - headroom - footer };
   }
 
   function layout(): void {
@@ -121,13 +158,13 @@ export function start(): void {
     const outer = Math.min(46, width * 0.05);
     const gap = Math.min(30, width * 0.028);
     const usableWidth = width - outer * 2 - gap * (columns - 1);
-    const usableHeight = height - HEADROOM - FOOTER - outer * 2 - gap * (rows - 1);
+    const usableHeight = height - headroom - footer - outer * 2 - gap * (rows - 1);
     const cardWidth = usableWidth / columns;
     const cardHeight = usableHeight / rows;
 
     cards = instruments.map((_, i) => ({
       x: outer + (i % columns) * (cardWidth + gap),
-      y: HEADROOM + outer + Math.floor(i / columns) * (cardHeight + gap),
+      y: headroom + outer + Math.floor(i / columns) * (cardHeight + gap),
       width: cardWidth,
       // The label sits inside the card, below the instrument.
       height: cardHeight,
@@ -151,6 +188,13 @@ export function start(): void {
 
   /** Live play: sound it, and record it if we are recording. */
   function emit(note: Note): void {
+    // Playing is the answer to the instrument's invitation, so the invitation
+    // goes. `firstGesture` cannot do this: by the time an instrument is open the
+    // session has long since started.
+    if (inviting) {
+      inviting = false;
+      invitation?.classList.add("gone");
+    }
     sound(note);
     recorder.capture(note);
   }
@@ -170,12 +214,35 @@ export function start(): void {
     progress = 0;
     const instrument = instruments[index];
     invitation?.classList.remove("gone");
+    inviting = true;
+    hintFade = 1;
     if (invitationTitle) invitationTitle.textContent = instrument.invitation;
     if (invitationHint) invitationHint.textContent = instrument.hint;
     if (nowPlaying) nowPlaying.textContent = instrument.name;
+    if (keyLegend) {
+      const keys = instrument
+        .keyHints()
+        .map((hint) => hint.label)
+        .filter(Boolean);
+      keyLegend.textContent = keys.length ? `keys ${keys.join(" ")}` : "";
+    }
     document.body.dataset.mode = "open";
+    markNav();
+    // The bar just gained the instrument's name and key row, which may have
+    // wrapped it onto a second line.
+    measureChrome();
+    layout();
     // The click that opens an instrument is itself the first sound.
     instrument.flourish(sound);
+  }
+
+  /** Keeps the nav in step with what is open, for anyone reading it rather than
+   *  looking at the cards. */
+  function markNav(): void {
+    navLinks.forEach((link, i) => {
+      if (i === active && mode !== "gallery") link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    });
   }
 
   function close(): void {
@@ -184,8 +251,12 @@ export function start(): void {
     mode = "closing";
     progress = 0;
     invitation?.classList.add("gone");
+    inviting = false;
     document.body.dataset.mode = "gallery";
     if (nowPlaying) nowPlaying.textContent = "";
+    if (keyLegend) keyLegend.textContent = "";
+    markNav();
+    measureChrome();
   }
 
   // --- input -----------------------------------------------------------------
@@ -289,7 +360,9 @@ export function start(): void {
       return;
     }
 
-    if (mode !== "open") return;
+    // Playable as soon as it starts opening: waiting out the half-second zoom
+    // before the keyboard works feels like the page ignoring you.
+    if (mode !== "open" && mode !== "opening") return;
     firstGesture();
     // Single characters arrive lowercased; named keys ("ArrowUp") as they are.
     const token = event.key.length === 1 ? key : event.key;
@@ -307,6 +380,12 @@ export function start(): void {
   });
 
   // --- transport -------------------------------------------------------------
+
+  /** Buttons keep focus after a click, and then space activates them again as
+   *  well as reaching the transport. Handing focus back stops the double-fire. */
+  function release(event: Event): void {
+    (event.currentTarget as HTMLElement | null)?.blur();
+  }
 
   function applyMute(nowMuted: boolean): void {
     if (!muteButton) return;
@@ -342,12 +421,14 @@ export function start(): void {
     transport?.setAttribute("data-state", state);
   }
 
-  recordButton?.addEventListener("click", () => {
+  recordButton?.addEventListener("click", (event) => {
+    release(event);
     firstGesture();
     toggleRecord();
   });
 
-  playButton?.addEventListener("click", () => {
+  playButton?.addEventListener("click", (event) => {
+    release(event);
     firstGesture();
     // Playing → stop. Anything else, including mid-record, → play: leaving a
     // recording running when you asked to hear it back would be a trap.
@@ -356,24 +437,51 @@ export function start(): void {
     refreshTransport();
   });
 
-  demoButton?.addEventListener("click", () => {
+  demoButton?.addEventListener("click", (event) => {
+    release(event);
     firstGesture();
     recorder.load(demoLoop());
     refreshTransport();
   });
 
-  clearButton?.addEventListener("click", () => {
+  clearButton?.addEventListener("click", (event) => {
+    release(event);
     firstGesture();
     recorder.clear();
     refreshTransport();
   });
 
-  backButton?.addEventListener("click", () => {
+  backButton?.addEventListener("click", (event) => {
+    release(event);
     firstGesture();
     close();
   });
 
-  muteButton?.addEventListener("click", () => {
+  // The gallery cards live on a canvas, which a keyboard and a screen reader
+  // cannot reach. These links are the accessible way in, so they have to do
+  // exactly what clicking a card does.
+  for (const [index, link] of navLinks.entries()) {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      link.blur();
+      firstGesture();
+      if (mode === "open" && active === index) close();
+      else if (mode === "open") {
+        // Straight from one instrument to another, without a trip through the
+        // gallery: closing first would swallow the click.
+        instruments[active].blur();
+        mode = "gallery";
+        active = -1;
+        layout();
+        open(index);
+      } else {
+        open(index);
+      }
+    });
+  }
+
+  muteButton?.addEventListener("click", (event) => {
+    release(event);
     firstGesture();
     applyMute(toggleMuted());
   });
@@ -390,6 +498,7 @@ export function start(): void {
     canvas.style.height = `${height}px`;
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     atmosphere.resize(width, height);
+    measureChrome();
     layout();
   }
 
@@ -451,14 +560,41 @@ export function start(): void {
     c.restore();
   }
 
+  /**
+   * The playing keys, written on the instrument. Bright when it opens and then
+   * settling back to something you can still read — the way fret markers are
+   * always there without ever being the point.
+   */
+  function drawKeyHints(instrument: Instrument): void {
+    const alpha = 0.32 + hintFade * 0.5;
+    c.font = "500 10.5px ui-sans-serif, system-ui, sans-serif";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+
+    for (const { label, x, y } of instrument.keyHints()) {
+      if (!label) continue;
+      const text = label.toUpperCase();
+      const w = Math.max(16, c.measureText(text).width + 11);
+      c.fillStyle = `hsla(${instrument.hue}, 24%, 8%, ${alpha * 0.72})`;
+      c.beginPath();
+      c.roundRect(x - w / 2, y - 8, w, 16, 5);
+      c.fill();
+      c.strokeStyle = `hsla(${instrument.hue}, 34%, 62%, ${alpha * 0.4})`;
+      c.lineWidth = 1;
+      c.stroke();
+      c.fillStyle = `hsla(${instrument.hue}, 26%, 88%, ${alpha})`;
+      c.fillText(text, x, y + 0.5);
+    }
+  }
+
   /** The loop, as a line across the top with a mark for every note in it. */
   function drawLoop(): void {
     const state = recorder.state();
     if (state === "idle" && recorder.isEmpty()) return;
 
-    const y = 22;
-    const left = 24;
-    const right = width - 24;
+    const y = loopY;
+    const left = 26;
+    const right = width - 26;
     const span = right - left;
 
     c.strokeStyle = "rgba(240, 230, 216, 0.1)";
@@ -525,6 +661,9 @@ export function start(): void {
     }
 
     atmosphere.update(dt);
+    // Settles over a few seconds rather than snapping, so the labels are loud
+    // exactly when a new player needs them.
+    if (hintFade > 0) hintFade = Math.max(0, hintFade - dt * 0.22);
     for (const [id, level] of activity) {
       const next = level - dt * 2.6;
       if (next <= 0) activity.delete(id);
@@ -560,6 +699,7 @@ export function start(): void {
 
       instruments[active].layout(eased);
       instruments[active].draw(c, t, mode !== "open");
+      if (mode === "open") drawKeyHints(instruments[active]);
     }
 
     drawLoop();

@@ -3,8 +3,8 @@
 // The lines about latency, expressiveness and whether a stranger can pick it up
 // are left to the crit — a test cannot listen. What is asserted here is the
 // mechanically checkable half, and it is asserted against *every* page the build
-// emits rather than a hand-kept list, so an archived page cannot quietly stop
-// meeting the spec and a new page cannot be added without meeting it.
+// emits rather than a hand-kept list, so a page cannot be added without meeting
+// the spec.
 
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
@@ -35,15 +35,8 @@ describe("spec: the site ships", () => {
     expect(shipped).toContain("index.html");
   });
 
-  it("still ships the archived instrument", () => {
-    // Kept deployed on purpose: it is the process evidence for how the current
-    // prototype was arrived at.
-    expect(shipped).toContain("archive/osmos/open-field.html");
-    expect(shipped).toContain("archive/osmos/singularity.html");
-  });
-
-  it("built more than one page", () => {
-    expect(pages.length).toBeGreaterThan(1);
+  it("builds every page it ships", () => {
+    expect(pages.length).toBeGreaterThan(0);
   });
 });
 
@@ -100,8 +93,7 @@ describe("spec: no way to play it wrong", () => {
 describe("spec: the link-preview card resolves", () => {
   // The shipped invariants check the card is *named*; nothing checks the URL
   // actually points at a file, and a card that 404s only shows up in the course
-  // gallery. The archived pages sit two directories down, which is exactly where
-  // this goes wrong.
+  // gallery. Any page in a subdirectory is where this goes wrong.
   for (const { name, doc } of pages) {
     it(`${name}'s og:image exists in the build`, () => {
       const card = doc.querySelector('meta[property="og:image"]')?.getAttribute("content");
@@ -116,8 +108,7 @@ describe("spec: the link-preview card resolves", () => {
 });
 
 describe("spec: every link resolves", () => {
-  // A dead link between the current page and the archive would be invisible
-  // until someone clicked it.
+  // A dead link would be invisible until someone clicked it.
   for (const { name, doc } of pages) {
     it(`${name}'s internal links all exist`, () => {
       for (const anchor of doc.querySelectorAll("a[href]")) {

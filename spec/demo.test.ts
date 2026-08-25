@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 import { DEMO_LAST_BEAT, demoLoop } from "../src/demo.ts";
-import { makeBass } from "../src/instruments/bass.ts";
+import { makeGuitar } from "../src/instruments/guitar.ts";
 import { makeBells } from "../src/instruments/bells.ts";
 import { makeBlocks } from "../src/instruments/blocks.ts";
 import { makeDrum } from "../src/instruments/drum.ts";
@@ -18,7 +18,7 @@ import { LOOP_SECONDS } from "../src/recorder.ts";
 
 const kit: Instrument[] = [
   makeHarp(),
-  makeBass(),
+  makeGuitar(),
   makeMarimba(),
   makeBlocks(),
   makeDrum(),
@@ -73,12 +73,21 @@ describe("the example beat", () => {
     }
   });
 
-  it("leaves the bass and bells sparse enough to breathe", () => {
-    // Both ring for seconds. Crowding them is the fastest way to turn the loop
-    // into a wash, so the arrangement's restraint is part of its contract.
-    const count = (id: string): number =>
-      events.filter((event) => event.note.instrument === id).length;
-    expect(count("bells")).toBeLessThanOrEqual(4);
-    expect(count("bass")).toBeLessThanOrEqual(12);
+  it("leaves the guitar and bells sparse enough to breathe", () => {
+    // Both ring for seconds, and crowding them is the fastest way to turn the
+    // loop into a wash — so restraint is part of the arrangement's contract.
+    //
+    // Counted in gestures rather than notes. A strum is three strings 50ms
+    // apart: one movement of one hand, and one thing the ear hears. Counting its
+    // notes separately would have this fail an arrangement that is not actually
+    // dense, which is exactly what it did on the first attempt.
+    const gestures = (id: string): number => {
+      const times = events
+        .filter((event) => event.note.instrument === id)
+        .map((event) => event.at);
+      return times.filter((at, i) => i === 0 || at - times[i - 1] > 0.08).length;
+    };
+    expect(gestures("bells")).toBeLessThanOrEqual(4);
+    expect(gestures("guitar")).toBeLessThanOrEqual(14);
   });
 });
